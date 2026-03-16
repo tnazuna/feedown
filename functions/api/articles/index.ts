@@ -5,6 +5,7 @@
 
 import { requireAuth } from '../../lib/auth';
 import { createSupabaseClient } from '../../lib/supabase';
+import { decodeHtmlEntities, stripHtmlAndDecode } from '../../lib/text';
 
 interface GetArticlesQuery {
   feedId?: string;
@@ -119,10 +120,10 @@ export async function onRequestGet(context: any): Promise<Response> {
     let articlesWithReadStatus = paginatedArticles.map(article => ({
       id: article.id,
       feedId: article.feed_id,
-      feedTitle: article.feed_title,
-      title: article.title,
+      feedTitle: decodeHtmlEntities(article.feed_title),
+      title: decodeHtmlEntities(article.title),
       url: article.url,
-      description: article.description,
+      description: stripHtmlAndDecode(article.description),
       publishedAt: article.published_at,
       fetchedAt: article.fetched_at,
       expiresAt: article.expires_at,

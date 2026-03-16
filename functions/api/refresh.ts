@@ -6,6 +6,7 @@
 
 import { requireAuth } from '../lib/auth';
 import { createSupabaseClient } from '../lib/supabase';
+import { decodeHtmlEntities, stripHtmlAndDecode } from '../lib/text';
 
 interface RefreshStats {
   totalFeeds: number;
@@ -164,8 +165,8 @@ export async function onRequestPost(context: any): Promise<Response> {
             last_fetched_at: new Date().toISOString(),
             last_success_at: new Date().toISOString(),
             error_count: 0,
-            title: feed.title || parsedFeed.title,
-            description: feed.description || parsedFeed.description || '',
+            title: parsedFeed.title || feed.title,
+            description: parsedFeed.description || feed.description || '',
             favicon_url: faviconUrl,
           })
           .eq('id', feedId)
@@ -195,8 +196,8 @@ export async function onRequestPost(context: any): Promise<Response> {
     const transformedFeeds = feeds.map(feed => ({
       id: feed.id,
       url: feed.url,
-      title: feed.title,
-      description: feed.description,
+      title: decodeHtmlEntities(feed.title),
+      description: stripHtmlAndDecode(feed.description),
       faviconUrl: feed.favicon_url,
       addedAt: feed.added_at,
       lastFetchedAt: feed.last_fetched_at,
@@ -264,12 +265,12 @@ async function parseRssXml(xmlText: string): Promise<any> {
       const imageUrl = extractImageUrl(entryXml, entryContent);
 
       result.items.push({
-        title: stripHtml(entryTitle),
+        title: decodeHtmlEntities(stripHtml(entryTitle)),
         link: entryLink,
         guid: entryId,
         content: stripHtml(entryContent),
         publishedAt: new Date(entryPublished),
-        author: entryAuthor ? stripHtml(entryAuthor) : null,
+        author: entryAuthor ? decodeHtmlEntities(stripHtml(entryAuthor)) : null,
         imageUrl,
       });
     }
@@ -310,12 +311,12 @@ async function parseRssXml(xmlText: string): Promise<any> {
       const imageUrl = extractImageUrl(itemXml, itemContent);
 
       result.items.push({
-        title: stripHtml(itemTitle),
+        title: decodeHtmlEntities(stripHtml(itemTitle)),
         link: itemLink.trim(),
         guid: itemGuid.trim(),
         content: stripHtml(itemContent),
         publishedAt: new Date(itemPubDate),
-        author: itemAuthor ? stripHtml(itemAuthor) : null,
+        author: itemAuthor ? decodeHtmlEntities(stripHtml(itemAuthor)) : null,
         imageUrl,
       });
     }
@@ -353,12 +354,12 @@ async function parseRssXml(xmlText: string): Promise<any> {
       const imageUrl = extractImageUrl(itemXml, itemContent);
 
       result.items.push({
-        title: stripHtml(itemTitle),
+        title: decodeHtmlEntities(stripHtml(itemTitle)),
         link: itemLink.trim(),
         guid: itemGuid.trim(),
         content: stripHtml(itemContent),
         publishedAt: new Date(itemPubDate),
-        author: itemAuthor ? stripHtml(itemAuthor) : null,
+        author: itemAuthor ? decodeHtmlEntities(stripHtml(itemAuthor)) : null,
         imageUrl,
       });
     }
@@ -415,16 +416,7 @@ function extractImageUrl(entryXml: string, content: string): string | null {
  * Strip HTML tags and decode HTML entities
  */
 function stripHtml(html: string): string {
-  return html
-    .replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .trim();
+  return stripHtmlAndDecode(html);
 }
 
 /**

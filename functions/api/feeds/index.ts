@@ -6,6 +6,7 @@
 
 import { requireAuth, isTestAccount } from '../../lib/auth';
 import { createSupabaseClient } from '../../lib/supabase';
+import { decodeHtmlEntities, stripHtmlAndDecode } from '../../lib/text';
 
 /**
  * GET /api/feeds
@@ -44,8 +45,8 @@ export async function onRequestGet(context: any): Promise<Response> {
     const transformedFeeds = (feeds || []).map(feed => ({
       id: feed.id,
       url: feed.url,
-      title: feed.title,
-      description: feed.description,
+      title: decodeHtmlEntities(feed.title),
+      description: stripHtmlAndDecode(feed.description),
       faviconUrl: feed.favicon_url,
       addedAt: feed.added_at,
       lastFetchedAt: feed.last_fetched_at,
@@ -195,8 +196,8 @@ export async function onRequestPost(context: any): Promise<Response> {
     const newFeed = {
       id: feed.id,
       url: feed.url,
-      title: feed.title,
-      description: feed.description,
+      title: decodeHtmlEntities(feed.title),
+      description: stripHtmlAndDecode(feed.description),
       faviconUrl: feed.favicon_url,
       addedAt: feed.added_at,
       lastFetchedAt: feed.last_fetched_at,
@@ -256,16 +257,7 @@ async function parseFeedBasicInfo(xmlText: string): Promise<{ title: string; des
 }
 
 function stripHtmlTags(html: string): string {
-  return html
-    .replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .trim();
+  return stripHtmlAndDecode(html);
 }
 
 function extractFaviconUrl(feedUrl: string): string {
