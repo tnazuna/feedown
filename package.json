@@ -19,7 +19,7 @@
     "dev:web": "yarn workspace web dev",
     "dev:mobile": "yarn workspace mobile start",
     "dev:workers": "yarn workspace workers dev",
-    "build:web": "yarn workspace web build",
+    "build:web": "yarn workspace @feedown/shared build && yarn workspace web build",
     "build:mobile": "yarn workspace mobile build",
     "build:workers": "yarn workspace workers build",
     "sync-envs": "bash scripts/sync-envs.sh",
